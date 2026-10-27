@@ -1,3 +1,5 @@
+Mustaf Bare
+
 """
 doe.py
 
@@ -36,14 +38,13 @@ REPO = Path(__file__).resolve().parents[1]
 DATA = REPO / "data"
 PLOTS = REPO / "plots"
 
-STEP_C = 3.0      # how far each zone gets pushed up or down
-N_CENTER = 3      # extra runs with no trim
+STEP_C = 3.0      
+N_CENTER = 3      
 REACTOR = "A"
-SEED = 7          # fixed so the results come out the same every time
+SEED = 7          
 
 
 def build_design():
-    # -1 = zone set low, +1 = zone set high, 0 = center (no change)
     rows = []
     for z1, z2, z3, z4 in product([-1, 1], repeat=4):
         z5 = z1 * z2 * z3 * z4
@@ -57,7 +58,7 @@ def build_design():
 
 def run_experiment(design, recipe, reactor, seed):
     rng = np.random.default_rng(seed)
-    order = rng.permutation(len(design))   # shuffle the run order
+    order = rng.permutation(len(design))   
 
     log = []
     run_number = 0
@@ -66,8 +67,6 @@ def run_experiment(design, recipe, reactor, seed):
         coded = design.loc[row_index].to_numpy(dtype=float)
         trim = coded * STEP_C
 
-        # new seed every run so each one gets its own noise,
-        # just like back-to-back runs on a real tool
         wafers, sites = furnace.run_load(recipe, reactor=reactor, zone_trim_c=trim,
                                          seed=seed * 1000 + run_number)
         monitors = furnace.monitor_summary(sites)
@@ -88,16 +87,11 @@ def fit_sensitivity(log):
 
     trims = log[trim_cols].to_numpy()
     Y = log[monitor_cols].to_numpy()
-
-    # column of 1s gives the baseline (intercept), the rest are the trims
     X = np.column_stack([np.ones(len(trims)), trims])
 
-    # least squares fits all 5 monitors at once
     coef = np.linalg.lstsq(X, Y, rcond=None)[0]
     baseline = coef[0]
-    S = coef[1:].T   # transpose so rows = monitors, columns = zones
-
-    # how well did the straight line fit?
+    S = coef[1:].T   
     resid = Y - X @ coef
     ss_res = (resid ** 2).sum(axis=0)
     ss_tot = ((Y - Y.mean(axis=0)) ** 2).sum(axis=0)
@@ -108,8 +102,6 @@ def fit_sensitivity(log):
 
 
 def curvature_check(log):
-    # If the response were curved, the center runs would land away from
-    # the average of the corner runs. A gap near 0 means linear is fine.
     trim_cols = [f"trim_z{z}" for z in range(1, cfg.N_ZONES + 1)]
     monitor_cols = [f"m{s}" for s in cfg.MONITOR_SLOTS]
 
@@ -120,13 +112,8 @@ def curvature_check(log):
 
 
 def true_sensitivity(recipe, reactor, step=0.5):
-    # The real answer straight from the physics, no noise.
-    # Only possible because this is a simulator, it's just here to grade the DOE.
     slots = np.array(cfg.MONITOR_SLOTS)
     ox = furnace.oxidant_factor()[slots - 1]
-
-    # monitors are measured as a 9-site average, and the edge sites
-    # run a little thick, so include that
     site_factors = [1 + cfg.WIW_EDGE_FRAC * r ** 2 for r, angle in cfg.SITES]
     wiw = np.mean(site_factors)
 
@@ -139,7 +126,6 @@ def true_sensitivity(recipe, reactor, step=0.5):
     for j in range(cfg.N_ZONES):
         nudge = np.zeros(cfg.N_ZONES)
         nudge[j] = step
-        # nudge zone j up and down a little and see how much each monitor moves
         S[:, j] = (monitor_thickness(nudge) - monitor_thickness(-nudge)) / (2 * step)
     return S
 
@@ -150,7 +136,6 @@ def plot_sensitivity(S, save_to):
     fig, ax = plt.subplots(figsize=(6.5, 5.5))
     im = ax.imshow(S, cmap="Blues", vmin=0)
 
-    # write the number in each box, white on the dark ones so it's readable
     for i in range(S.shape[0]):
         for j in range(S.shape[1]):
             if S[i, j] > 0.6 * S.max():
@@ -197,13 +182,11 @@ if __name__ == "__main__":
     for i in range(len(names)):
         print(f"  {names[i]:<9} {gaps.iloc[i]:+.1f}")
 
-    # grade the DOE against the real answer
     biggest_miss = np.abs(S - S_true).max()
     diag_error = np.abs(np.diag(S) / np.diag(S_true) - 1).max() * 100
     print(f"\nDOE vs true physics: biggest miss {biggest_miss:.2f} Å/°C, "
           f"own-zone values off by {diag_error:.1f}% at most")
 
-    # save the run log and the matrix (zone_tuning.py reads the matrix)
     DATA.mkdir(exist_ok=True)
     PLOTS.mkdir(exist_ok=True)
     log.to_csv(DATA / "doe_runs.csv", index=False)
