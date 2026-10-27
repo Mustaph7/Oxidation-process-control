@@ -58,7 +58,7 @@ def main():
                 print("    Thickness has to be positive, try again.")
                 continue
             df.loc[i, "thickness_A"] = value
-            df.to_csv(csv_path, index=False)  # save every entry so nothing gets lost
+            df.to_csv(csv_path, index=False) 
             break
 
         if answer.lower() == "q":
