@@ -1,5 +1,8 @@
 # Batch Furnace Uniformity & Drift Control
 
+**[▶ Try the live demo](https://furnace-control.streamlit.app/)**: move the zone trims, turn R2R control on and off, and match the reactors in your browser.
+
+
 **Problem:** Vertical batch furnaces don't grow the same oxide on every wafer. Wafers at different boat positions see different temperatures and gas conditions, heaters drift as they age, and the two reactors on a dual-reactor tool rarely match. Fixing this by trial and error costs tool time, monitor wafers and engineering hours.
 
 **What this project does:** It builds a physics-based simulator of a dual-reactor vertical oxidation furnace, then works through three real process engineering problems on it, the same way they'd be handled on the floor: **symptom → data → root cause → fix → verify.**
