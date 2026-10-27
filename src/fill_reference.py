@@ -1,15 +1,3 @@
-# fill_reference.py
-#
-# Walks me through the blank rows in a reference CSV one at a time.
-# For each row it shows exactly what to type into the BYU calculator,
-# then I type BYU's answer here and it saves straight into the CSV.
-#
-#   Enter   skip this row for now
-#   q       save and quit
-#
-# Run from the repo folder:
-#   python src\fill_reference.py
-#   python src\fill_reference.py data\some_other_file.csv
 
 import sys
 from pathlib import Path
