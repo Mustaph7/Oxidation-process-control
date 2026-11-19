@@ -133,7 +133,7 @@ venv\Scripts\activate          # Windows (macOS/Linux: source venv/bin/activate)
 pip install -r requirements.txt
 ```
 
-Run in this order, since later steps read what earlier ones save:
+Run in this order:
 
 ```
 python src\deal_grove.py      # growth curves
